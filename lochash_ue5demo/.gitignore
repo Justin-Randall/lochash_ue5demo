@@ -1,0 +1,108 @@
+# Ignore project-specific settings files
+/Saved/
+*.user
+*.userprefs
+*.iobj
+*.ipdb
+*.pdb
+*.opendb
+*.VC.db
+*.vspscc
+*.vssscc
+
+# Ignore binary build artifacts
+/Binaries/
+*.exe
+*.dll
+*.app
+*.dylib
+*.so
+*.a
+*.lib
+
+# Ignore intermediate build files
+/Intermediate/
+/DerivedDataCache/
+/Build/
+
+# Ignore plugin intermediate files
+Plugins/*/Intermediate/
+Plugins/*/Binaries/
+
+# Ignore platform-specific build files
+*.VC.db
+*.vs/
+/.vscode/
+.idea/
+
+# Ignore crash reports
+/Saved/Crashes/
+
+# Ignore user-specific settings
+/Saved/Config/Windows/EditorPerProjectUserSettings.ini
+/Saved/Logs/
+
+# Ignore temporary files
+*.log
+*.temp
+*.tmp
+*.cache
+*.csproj
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.xcuserdatad
+
+# Ignore Mac-specific files
+.DS_Store
+
+# Ignore Windows-specific files
+Thumbs.db
+
+# Ignore Python bytecode
+__pycache__/
+
+# Ignore build output
+build/
+dist/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore other common files
+*.swp
+*.lock
+*.env
+.env.local
+.env.*.local
+
+# Ignore Unreal Engine auto-generated files
+/Saved/Backup/
+*.uprojectdirs
+*.generated.h
+*.generated.cpp
+*.generated.*
+
+# Ignore package manager files
+npm-debug.log
+yarn-error.log
+
+# Ignore the project's root configuration files
+*.sln
+*.csproj
+*.pyproj
+*.suo
+*.user
+*.userosscache
+*.userprefs
+
+# Ignore the project’s build artifacts
+/Binaries
+/DerivedDataCache
+/Intermediate
+/Saved
+/Build
+/Packages
+/Content/Developers
+Content/Developers/
