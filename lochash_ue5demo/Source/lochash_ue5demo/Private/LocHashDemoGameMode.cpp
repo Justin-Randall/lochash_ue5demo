@@ -37,13 +37,14 @@ void ALocHashDemoGameMode::Tick(float DeltaTime)
 	{
 		if (bDebugDraw && bDrawHashBoxes)
 		{
+			const auto HalfHashPrecision = HashPrecision * 0.5f;
 			for (const auto& CenterPoint : QuantizedBucketCoordinates)
 			{
 				// Each point in the bucket is the center of a bounding cube representing
 				//  bucket in the hash table. We will draw a bounding box around each.
 				// The box extents are HashPrecision/2 in each direction.
-				FVector BoxExtent = FVector(HashPrecision * 0.5f);
-				FVector BoxLocation = CenterPoint;
+				FVector BoxExtent = FVector(HalfHashPrecision);
+				FVector BoxLocation = FVector(CenterPoint.X + HalfHashPrecision, CenterPoint.Y + HalfHashPrecision, CenterPoint.Z + HalfHashPrecision);
 				DrawDebugBox(GetWorld(), BoxLocation, BoxExtent, FColor::Green, false, -1, 0, 10.0f);
 			}
 		}
