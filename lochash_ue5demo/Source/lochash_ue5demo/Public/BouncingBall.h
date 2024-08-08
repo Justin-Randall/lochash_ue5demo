@@ -42,5 +42,5 @@ private:
 	ALocHashDemoGameMode* GameMode;
 	// LocationHash keys for this ball
 	// This is an optimization to reduce the number of queries to the LocationHash
-	TArray<size_t> LocationHashKeys;
+	TArray<FLocationHash::UQuantizedCoordinate> LocationHashKeys;
 };

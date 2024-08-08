@@ -2,6 +2,7 @@
 #define _INCLUDED_location_hash_HPP
 
 #include "location_hash_algorithm.hpp"
+#include "location_hash_quantized_coordinate.hpp"
 #include <algorithm>
 #include <array>
 #include <unordered_map>
@@ -22,24 +23,28 @@ namespace lochash
 	template <size_t Precision, typename CoordinateType, size_t Dimensions, typename ObjectType = void>
 	class LocationHash
 	{
-		static_assert((Precision& (Precision - 1)) == 0, "Precision must be a power of two");
+		static_assert((Precision & (Precision - 1)) == 0, "Precision must be a power of two");
 		static_assert(std::is_arithmetic<CoordinateType>::value, "CoordinateType must be an arithmetic type.");
 
-	public:
+	  public:
 		static constexpr size_t dimension_count = Dimensions;
-		using CoordinateArray = std::array<CoordinateType, Dimensions>;
-		using BucketContent = std::vector<std::pair<CoordinateArray, ObjectType*>>;
-		using ObjectT = ObjectType;
+		using CoordinateArray                   = std::array<CoordinateType, Dimensions>;
+		using BucketContent                     = std::vector<std::pair<CoordinateArray, ObjectType *>>;
+		using CoordinateMap =
+		    std::unordered_map<QuantizedCoordinate<Precision, CoordinateType, Dimensions>, BucketContent>;
+
+		using QuantizedCoordinateType = QuantizedCoordinate<Precision, CoordinateType, Dimensions>;
+
 		/**
 		 * Adds coordinates and optionally an associated object pointer to the appropriate bucket.
 		 *
 		 * @param object Pointer to the associated object (optional, only if ObjectType is not void).
 		 * @param coordinates Array of coordinate inputs.
 		 */
-		void add(ObjectType* object, const CoordinateArray& coordinates)
+		void add(ObjectType * object, const CoordinateArray & coordinates)
 		{
-			size_t hash_key = generate_hash<Precision>(coordinates);
-			data_[hash_key].emplace_back(coordinates, object);
+			data_[QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coordinates)].emplace_back(coordinates,
+			                                                                                            object);
 		}
 
 		/**
@@ -53,11 +58,12 @@ namespace lochash
 		 * @param coordinates Array of coordinate inputs.
 		 * @param radius The radius of the bucket.
 		 */
-		std::vector<size_t> add(ObjectType* object, const CoordinateArray& coordinates, CoordinateType radius)
+		std::vector<QuantizedCoordinateType> add(ObjectType * object, const CoordinateArray & coordinates,
+		                                         CoordinateType radius)
 		{
 			// generate keys for all the buckets within the radius
-			auto keys =
-				generate_all_hash_keys_within_distance<Precision, CoordinateType, Dimensions>(coordinates, radius);
+			auto keys = generate_all_quantized_coordinates_within_distance<Precision, CoordinateType, Dimensions>(
+			    coordinates, radius);
 			for (auto key : keys) {
 				data_[key].emplace_back(coordinates, object);
 			}
@@ -70,10 +76,10 @@ namespace lochash
 		 *
 		 * @param coordinates Array of coordinate inputs.
 		 */
-		void add(const CoordinateArray& coordinates)
+		void add(const CoordinateArray & coordinates)
 		{
-			size_t hash_key = generate_hash<Precision>(coordinates);
-			data_[hash_key].emplace_back(coordinates, nullptr);
+			// Implicit conversion to QuantizedCoordinate, so fine to use CoordinateArray as a key
+			data_[coordinates].emplace_back(coordinates, nullptr);
 		}
 
 		/**
@@ -82,14 +88,12 @@ namespace lochash
 		 * @param coordinates Array of coordinate inputs to determine the bucket.
 		 * @return A reference to the bucket content (vector of coordinates and associated objects).
 		 */
-		const BucketContent& query(const CoordinateArray& coordinates) const
+		const BucketContent & query(const CoordinateArray & coordinates) const
 		{
-			size_t     hash_key = generate_hash<Precision>(coordinates);
-			const auto it = data_.find(hash_key);
+			const auto it = data_.find(QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coordinates));
 			if (it != data_.end()) {
 				return it->second;
-			}
-			else {
+			} else {
 				static const BucketContent empty_bucket;
 				return empty_bucket;
 			}
@@ -101,12 +105,12 @@ namespace lochash
 		 * @param coordinates Array of coordinate inputs.
 		 * @return True if an item was removed, false otherwise.
 		 */
-		bool remove(const CoordinateArray& coordinates)
+		bool remove(const CoordinateArray & coordinates)
 		{
-			size_t     hash_key = generate_hash<Precision>(coordinates);
-			const auto it = data_.find(hash_key);
+			QuantizedCoordinate key = QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coordinates);
+			const auto          it  = data_.find(key);
 			if (it != data_.end()) {
-				auto& bucket = it->second;
+				auto & bucket = it->second;
 				for (auto bucket_it = bucket.begin(); bucket_it != bucket.end(); ++bucket_it) {
 					if (coordinates_match(bucket_it->first, coordinates)) {
 						// safe to erase in the loop, going to return immediately
@@ -128,12 +132,12 @@ namespace lochash
 		 * @param coordinates Array of coordinate inputs.
 		 * @return True if an item was removed, false otherwise.
 		 */
-		bool remove(ObjectType* object, const CoordinateArray& coordinates)
+		bool remove(ObjectType * object, const CoordinateArray & coordinates)
 		{
-			size_t     hash_key = generate_hash<Precision>(coordinates);
-			const auto it = data_.find(hash_key);
+			QuantizedCoordinate key = QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coordinates);
+			const auto          it  = data_.find(key);
 			if (it != data_.end()) {
-				auto& bucket = it->second;
+				auto & bucket = it->second;
 				for (auto bucket_it = bucket.begin(); bucket_it != bucket.end(); ++bucket_it) {
 					if (bucket_it->second == object) {
 						bucket.erase(bucket_it);
@@ -147,15 +151,15 @@ namespace lochash
 			return false;
 		}
 
-		bool remove(ObjectType* object, const CoordinateArray& coordinates, const CoordinateType radius)
+		bool remove(ObjectType * object, const CoordinateArray & coordinates, const CoordinateType radius)
 		{
-			auto keys =
-				generate_all_hash_keys_within_distance<Precision, CoordinateType, Dimensions>(coordinates, radius);
+			auto keys = generate_all_quantized_coordinates_within_distance<Precision, CoordinateType, Dimensions>(
+			    coordinates, radius);
 			bool removed = false;
 			for (auto key : keys) {
 				const auto it = data_.find(key);
 				if (it != data_.end()) {
-					auto& bucket = it->second;
+					auto & bucket = it->second;
 					for (auto bucket_it = bucket.begin(); bucket_it != bucket.end(); ++bucket_it) {
 						if (bucket_it->second == object) {
 							bucket.erase(bucket_it);
@@ -177,7 +181,7 @@ namespace lochash
 		 * @param new_coordinates Array of coordinate inputs for the new location.
 		 * @return True if an item was moved, false otherwise.
 		 */
-		bool move(const CoordinateArray& old_coordinates, const CoordinateArray& new_coordinates)
+		bool move(const CoordinateArray & old_coordinates, const CoordinateArray & new_coordinates)
 		{
 			if (buckets_match(old_coordinates, new_coordinates)) {
 				return false;
@@ -199,7 +203,7 @@ namespace lochash
 		 * @return true
 		 * @return false
 		 */
-		bool move(ObjectType* object, const CoordinateArray& old_coordinates, const CoordinateArray& new_coordinates)
+		bool move(ObjectType * object, const CoordinateArray & old_coordinates, const CoordinateArray & new_coordinates)
 		{
 			if (buckets_match(old_coordinates, new_coordinates)) {
 				return false;
@@ -212,13 +216,14 @@ namespace lochash
 			return false;
 		}
 
-		std::vector<size_t> move(ObjectType* object, const CoordinateType& radius,
-			const CoordinateArray& old_coordinates, const CoordinateArray& new_coordinates)
+		std::vector<QuantizedCoordinateType> move(ObjectType * object, const CoordinateType & radius,
+		                                          const CoordinateArray & old_coordinates,
+		                                          const CoordinateArray & new_coordinates)
 		{
 			// early out if coordinates are the same
 			if (coordinates_match(old_coordinates, new_coordinates)) {
-				return generate_all_hash_keys_within_distance<Precision, CoordinateType, Dimensions>(old_coordinates,
-					radius);
+				return generate_all_quantized_coordinates_within_distance<Precision, CoordinateType, Dimensions>(
+				    old_coordinates, radius);
 			}
 
 			remove(object, old_coordinates, radius);
@@ -231,32 +236,33 @@ namespace lochash
 		 *
 		 * @return The underlying data map.
 		 */
-		const std::unordered_map<size_t, BucketContent>& get_data() const { return data_; }
+		// const std::unordered_map<size_t, BucketContent> & get_data() const { return data_; }
+		const CoordinateMap & get_data() const { return data_; }
 
 		/**
 		 * Clears all data from the LocationHash.
 		 */
 		void clear() { data_.clear(); }
 
-	private:
-		bool buckets_match(const CoordinateArray& coords1, const CoordinateArray& coords2) const
+	  private:
+		bool buckets_match(const CoordinateArray & coords1, const CoordinateArray & coords2) const
 		{
-			const auto old_coordinates_hash = generate_hash<Precision>(coords1);
-			const auto new_coordinates_hash = generate_hash<Precision>(coords2);
-			if (old_coordinates_hash == new_coordinates_hash) {
+			const auto old_coordinates = QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coords1);
+			const auto new_coordinates = QuantizedCoordinate<Precision, CoordinateType, Dimensions>(coords2);
+			if (old_coordinates == new_coordinates) {
 				return true;
 			}
 			return false;
 		}
-		bool coordinates_match(const CoordinateArray& coords1, const CoordinateArray& coords2) const
+
+		bool coordinates_match(const CoordinateArray & coords1, const CoordinateArray & coords2) const
 		{
 			for (size_t i = 0; i < Dimensions; ++i) {
 				if constexpr (std::is_floating_point<CoordinateType>::value) {
 					if (std::fabs(coords1[i] - coords2[i]) > std::numeric_limits<CoordinateType>::epsilon()) {
 						return false;
 					}
-				}
-				else {
+				} else {
 					if (coords1[i] != coords2[i]) {
 						return false;
 					}
@@ -265,7 +271,7 @@ namespace lochash
 			return true;
 		}
 
-		std::unordered_map<size_t, BucketContent> data_;
+		CoordinateMap data_;
 	};
 } // namespace lochash
 

@@ -6,6 +6,7 @@
 #include "lochash.hpp"
 #include "location_hash.hpp"
 #include "location_hash_query_distance_squared.hpp"
+#include "location_hash_quantized_coordinate.hpp"
 
 // Must be a power of 2 for the location hash to work correctly. There is a compile-time check for this.
 constexpr size_t HashPrecision = 256;
@@ -13,15 +14,16 @@ constexpr size_t HashPrecision = 256;
 class FLocationHash : public lochash::LocationHash<HashPrecision, double, 3, AActor>
 {
 public:
+	using UQuantizedCoordinate = lochash::QuantizedCoordinate<HashPrecision, double, 3>;
 
-	TArray<size_t> Add(AActor& Object)
+	TArray<UQuantizedCoordinate> Add(AActor& Object)
 	{
 		const auto Location = Object.GetActorLocation();
 		const FLocationHash::CoordinateArray Center = { Location.X, Location.Y, Location.Z };
 		const auto Sphere = Object.GetRootComponent()->Bounds.GetSphere();
 		const auto Keys = add(&Object, Center, Sphere.W);
 
-		TArray<size_t> Results;
+		TArray<UQuantizedCoordinate> Results;
 		for (const auto& Key : Keys)
 		{
 			Results.Add(Key);
@@ -30,7 +32,7 @@ public:
 		return Results;
 	}
 
-	TArray<size_t> Move(AActor& Object, const FVector& NewLocation)
+	TArray<UQuantizedCoordinate> Move(AActor& Object, const FVector& NewLocation)
 	{
 		const auto OldLocation = Object.GetActorLocation();
 		const FLocationHash::CoordinateArray OldCenter = { OldLocation.X, OldLocation.Y, OldLocation.Z };
@@ -38,7 +40,7 @@ public:
 		const auto Sphere = Object.GetRootComponent()->Bounds.GetSphere();
 		const auto Keys = move(&Object, Sphere.W, OldCenter, NewCenter);
 
-		TArray<size_t> Results;
+		TArray<UQuantizedCoordinate> Results;
 		for (const auto& Key : Keys)
 		{
 			Results.Add(Key);
@@ -48,7 +50,7 @@ public:
 		return Results;
 	}
 
-	TArray<AActor*> Query(const TArray<size_t>& Keys)
+	TArray<AActor*> Query(const TArray<UQuantizedCoordinate>& Keys)
 	{
 		TArray<AActor*> Results;
 		const auto& Data = get_data();
