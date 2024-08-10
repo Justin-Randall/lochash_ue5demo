@@ -28,7 +28,7 @@ public:
 	void AddDebugLineDrawn() { DebugLinesDrawn++; }
 	bool GetDrawHashBoxes() const { return bDrawHashBoxes; }
 	TArray<ABouncingBall*>& GetBalls() { return Balls; }
-	void AddQuantizedBucketCoordinates(const TArray<FVector>& QuantizedBucketCoordinates);
+	void AddQuantizedBucketCoordinates(const TArray<UQuantizedCoordinate>& QuantizedBucketCoordinates);
 	void AddCollisionChecks(size_t NumChecks) { CollisionChecks += NumChecks; }
 	void AddCollisionDetections(size_t NumDetections) { CollisionDetections += NumDetections; }
 	size_t GetCollisionChecks() const { return CollisionChecks; }
@@ -51,7 +51,7 @@ public:
 
 private:
 	FLocationHash LocHash;
-	TSet<FVector> QuantizedBucketCoordinates;
+	TSet<UQuantizedCoordinate> QuantizedBucketCoordinates;
 	TArray<ABouncingBall*> Balls;
 	float BoxSize = 15000.0f;
 	size_t CollisionChecks = 0;

@@ -71,10 +71,10 @@ void ALocHashDemoHUD::DrawHUD()
 		}
 	}
 
-	auto World = GetWorld()->GetAuthGameMode();
+	auto World = GetWorld();
 	if (World)
 	{
-		if (ALocHashDemoGameMode* GameMode = Cast<ALocHashDemoGameMode>(World))
+		if (ALocHashDemoGameMode* GameMode = Cast<ALocHashDemoGameMode>(World->GetAuthGameMode()))
 		{
 			FString Text = FString::Printf(TEXT("Location Hash: %s"), GameMode->GetUseLocationHash() ? TEXT("Enabled") : TEXT("Disabled"));
 			DrawText(Text, FColor::White, 50, 170, nullptr, 1.5f);

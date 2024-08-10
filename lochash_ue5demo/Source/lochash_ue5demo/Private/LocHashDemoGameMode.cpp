@@ -5,6 +5,27 @@
 #include "LocHashDemoPlayerController.h"
 #include "BouncingBall.h"
 #include "LocHashDemoHUD.h"
+#include "Engine/World.h"
+#include "Components/LineBatchComponent.h"
+
+
+void DrawPersistentBox(UWorld& World, const FVector& Center, const FVector& Extent, const FRotator& Rotation, const FColor& Color, float Thickness)
+{
+	FVector Vertex[8];
+	FTransform Transform(Rotation, Center);
+	Vertex[0] = Transform.TransformPosition(FVector(-Extent.X, -Extent.Y, -Extent.Z));
+	Vertex[1] = Transform.TransformPosition(FVector(Extent.X, -Extent.Y, -Extent.Z));
+	Vertex[2] = Transform.TransformPosition(FVector(Extent.X, Extent.Y, -Extent.Z));
+	Vertex[3] = Transform.TransformPosition(FVector(-Extent.X, Extent.Y, -Extent.Z));
+	Vertex[4] = Transform.TransformPosition(FVector(-Extent.X, -Extent.Y, Extent.Z));
+	Vertex[5] = Transform.TransformPosition(FVector(Extent.X, -Extent.Y, Extent.Z));
+	Vertex[6] = Transform.TransformPosition(FVector(Extent.X, Extent.Y, Extent.Z));
+	Vertex[7] = Transform.TransformPosition(FVector(-Extent.X, Extent.Y, Extent.Z));
+
+	// Batch the drawing of lines in a single function call
+	const float LifeTime = 0.04f;
+	World.PersistentLineBatcher->DrawBox(Center, Extent, Rotation.Quaternion(), Color, LifeTime, SDPG_World, Thickness);
+}
 
 ALocHashDemoGameMode::ALocHashDemoGameMode()
 {
@@ -35,17 +56,14 @@ void ALocHashDemoGameMode::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bUseLocationHash)
 	{
-		if (bDebugDraw && bDrawHashBoxes)
+		if (bDrawHashBoxes)
 		{
 			const auto HalfHashPrecision = HashPrecision * 0.5f;
 			for (const auto& CenterPoint : QuantizedBucketCoordinates)
 			{
-				// Each point in the bucket is the center of a bounding cube representing
-				//  bucket in the hash table. We will draw a bounding box around each.
-				// The box extents are HashPrecision/2 in each direction.
 				FVector BoxExtent = FVector(HalfHashPrecision);
-				FVector BoxLocation = FVector(CenterPoint.X + HalfHashPrecision, CenterPoint.Y + HalfHashPrecision, CenterPoint.Z + HalfHashPrecision);
-				DrawDebugBox(GetWorld(), BoxLocation, BoxExtent, FColor::Green, false, -1, 0, 10.0f);
+				FVector BoxLocation = FVector(CenterPoint.quantized_[0] + HalfHashPrecision, CenterPoint.quantized_[1] + HalfHashPrecision, CenterPoint.quantized_[2] + HalfHashPrecision);
+				DrawPersistentBox(*GetWorld(), BoxLocation, BoxExtent, FRotator::ZeroRotator, FColor::Green, 10.0f);
 			}
 		}
 
@@ -58,7 +76,7 @@ void ALocHashDemoGameMode::Tick(float DeltaTime)
 
 void ALocHashDemoGameMode::SpawnBalls()
 {
-	const int NumBalls = 50;
+	const int NumBalls = 100;
 	const float MaxVelocity = 250.0f;
 	float HalfBoxSize = BoxSize * 0.5f;
 
@@ -80,12 +98,12 @@ void ALocHashDemoGameMode::SpawnBalls()
 	}
 }
 
-void ALocHashDemoGameMode::AddQuantizedBucketCoordinates(const TArray<FVector>& QuantizedCoordinateList)
+void ALocHashDemoGameMode::AddQuantizedBucketCoordinates(const TArray<UQuantizedCoordinate>& QuantizedCoordinateList)
 {
 	if (!bUseLocationHash)
 		return;
 
-	for (const FVector& QuantizedBucketCoordinate : QuantizedCoordinateList)
+	for (const auto& QuantizedBucketCoordinate : QuantizedCoordinateList)
 	{
 		QuantizedBucketCoordinates.Add(QuantizedBucketCoordinate);
 	}
@@ -103,6 +121,7 @@ void ALocHashDemoGameMode::Reset()
 		}
 	}
 	Balls.Empty();
+
 	bUseLocationHash = true;
 	bDebugDraw = false;
 	bDrawHashBoxes = false;

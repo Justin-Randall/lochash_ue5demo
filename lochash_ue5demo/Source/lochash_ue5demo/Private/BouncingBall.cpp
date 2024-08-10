@@ -3,6 +3,8 @@
 
 #include "BouncingBall.h"
 #include "LocHashDemoGameMode.h"
+#include "Engine/World.h"
+#include "Components/LineBatchComponent.h"
 
 // Sets default values
 ABouncingBall::ABouncingBall()
@@ -31,6 +33,11 @@ void ABouncingBall::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UPrimitiveComponent* RootComp = Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		RootComp->SetSimulatePhysics(false);
+		RootComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 // Called every frame
@@ -106,9 +113,8 @@ void ABouncingBall::Tick(float DeltaTime)
 		LocationHashKeys = LocationHash->Move(*this, NewLocation);
 
 		// for debug drawing
-		const auto QuantizedBucketCoordinates = LocationHash->GetQuantizedCoordinatesWithinRange(*this);
 		// Let the game mode know:
-		GameMode->AddQuantizedBucketCoordinates(QuantizedBucketCoordinates);
+		GameMode->AddQuantizedBucketCoordinates(LocationHashKeys);
 	}
 	else
 	{
@@ -171,7 +177,8 @@ void ABouncingBall::CollideWithOtherBall(ABouncingBall& OtherBall, FVector& NewL
 		}
 		if (shouldDraw)
 		{
-			DrawDebugLine(GetWorld(), MyLocation, OtherLocation, FColor::Red, false, 0.1f, 0, 1.0f);
+			UWorld* World = GetWorld();
+			World->PersistentLineBatcher->DrawLine(MyLocation, OtherLocation, FLinearColor::Red, 0, 3.0f, 0.1f);
 			GameMode->AddDebugLineDrawn();
 		}
 	}
