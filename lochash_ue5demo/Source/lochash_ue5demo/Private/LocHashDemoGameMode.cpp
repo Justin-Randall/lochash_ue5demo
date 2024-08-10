@@ -53,6 +53,7 @@ void ALocHashDemoGameMode::Tick(float DeltaTime)
 	}
 	CollisionChecks = 0;
 	CollisionDetections = 0;
+	DebugLinesDrawn = 0;
 }
 
 void ALocHashDemoGameMode::SpawnBalls()
@@ -72,6 +73,7 @@ void ALocHashDemoGameMode::SpawnBalls()
 		ABouncingBall* Ball = GetWorld()->SpawnActor<ABouncingBall>(ABouncingBall::StaticClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 		if (Ball)
 		{
+			Ball->PrimaryActorTick.AddPrerequisite(this, this->PrimaryActorTick);
 			Ball->InitializeBall(*this, SpawnVelocity, LocHash);
 			Balls.Add(Ball);
 		}
@@ -111,9 +113,17 @@ void ALocHashDemoGameMode::Reset()
 void ALocHashDemoGameMode::ToggleUseLocationHash()
 {
 	bUseLocationHash = !bUseLocationHash;
-	if (!bUseLocationHash)
+	LocHash.clear();
+	if (bUseLocationHash)
 	{
-		LocHash.clear();
+		for (ABouncingBall* Ball : Balls)
+		{
+			if (Ball)
+			{
+				Ball->ClearLocationHashKeys();
+				LocHash.Add(*Ball);
+			}
+		}
 	}
 }
 

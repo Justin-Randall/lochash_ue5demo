@@ -150,15 +150,32 @@ void ABouncingBall::CollideWithOtherBall(ABouncingBall& OtherBall, FVector& NewL
 	const auto OtherLocation = OtherBall.GetActorLocation();
 	const auto MyRadius = GetRootComponent()->Bounds.GetSphere().W;
 	const auto OtherRadius = OtherBall.GetRootComponent()->Bounds.GetSphere().W;
+	const auto Distance = FVector::Dist(NewLocation, OtherLocation);
 
 	// Demonstrate the number of collision checks
 	GameMode->AddCollisionChecks(1);
 	if (GameMode->GetDebugDraw())
 	{
-		DrawDebugLine(GetWorld(), MyLocation, OtherLocation, FColor::Red, false, 0.1f, 0, 1.0f);
+		// debugging weird collisions after switching modes
+		const auto useLocationHash = GameMode->GetUseLocationHash();
+		if (useLocationHash)
+		{
+			check(useLocationHash && Distance * 0.5 <= HashPrecision);
+		}
+
+		bool shouldDraw = (GameMode->GetDebugLinesDrawn() < 500);
+		if (!shouldDraw)
+		{
+			// 1 in 10 chance it should draw anyway
+			shouldDraw = FMath::RandRange(0, 9) == 0;
+		}
+		if (shouldDraw)
+		{
+			DrawDebugLine(GetWorld(), MyLocation, OtherLocation, FColor::Red, false, 0.1f, 0, 1.0f);
+			GameMode->AddDebugLineDrawn();
+		}
 	}
 
-	const auto Distance = FVector::Dist(NewLocation, OtherLocation);
 	if (Distance <= MyRadius + OtherRadius)
 	{
 		const auto Normal = (MyLocation - OtherLocation).GetSafeNormal();

@@ -27,6 +27,7 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void ClearLocationHashKeys() { LocationHashKeys.Empty(); }
 
 	// Ball mesh component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

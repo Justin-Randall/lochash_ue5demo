@@ -9,7 +9,7 @@
 #include "location_hash_quantized_coordinate.hpp"
 
 // Must be a power of 2 for the location hash to work correctly. There is a compile-time check for this.
-constexpr size_t HashPrecision = 256;
+constexpr size_t HashPrecision = 512;
 
 class FLocationHash : public lochash::LocationHash<HashPrecision, double, 3, AActor>
 {
