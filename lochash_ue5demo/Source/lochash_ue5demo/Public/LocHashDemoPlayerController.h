@@ -37,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputMappingContext* GameplayInputMappingContext;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* ToggleQuitGameAction;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -45,4 +48,5 @@ protected:
 	void ToggleDrawHashBoxes();
 	void SpawnBalls();
 	void Reset();
+	void QuitGame();
 };

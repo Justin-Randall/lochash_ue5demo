@@ -46,6 +46,13 @@ ALocHashDemoPlayerController::ALocHashDemoPlayerController()
 	{
 		GameplayInputMappingContext = GameplayInputMappingContextObj.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> ToggleQuitGameActionObj(TEXT("/Game/Input/IA_QuitGame.IA_QuitGame"));
+	if (ToggleQuitGameActionObj.Succeeded())
+	{
+		ToggleQuitGameAction = ToggleQuitGameActionObj.Object;
+	}
+
 }
 
 void ALocHashDemoPlayerController::BeginPlay()
@@ -64,6 +71,7 @@ void ALocHashDemoPlayerController::BeginPlay()
 		EnhancedInputComponent->BindAction(ToggleDrawHashBoxesAction, ETriggerEvent::Started, this, &ALocHashDemoPlayerController::ToggleDrawHashBoxes);
 		EnhancedInputComponent->BindAction(SpawnBallsAction, ETriggerEvent::Started, this, &ALocHashDemoPlayerController::SpawnBalls);
 		EnhancedInputComponent->BindAction(ResetAction, ETriggerEvent::Started, this, &ALocHashDemoPlayerController::Reset);
+		EnhancedInputComponent->BindAction(ToggleQuitGameAction, ETriggerEvent::Started, this, &ALocHashDemoPlayerController::QuitGame);
 	}
 
 	if (ALocHashDemoHUD* HUD = Cast<ALocHashDemoHUD>(GetHUD()))
@@ -121,4 +129,9 @@ void ALocHashDemoPlayerController::Reset()
 	{
 		GameMode->Reset();
 	}
+}
+
+void ALocHashDemoPlayerController::QuitGame()
+{
+	GetWorld()->GetFirstPlayerController()->ConsoleCommand("quit");
 }

@@ -118,6 +118,7 @@ void ABouncingBall::Tick(float DeltaTime)
 	}
 	else
 	{
+#if 1
 		// demo the n^2 collision detection
 		const auto& AllBouncingBalls = GameMode->GetBalls();
 		for (auto OtherBall : AllBouncingBalls)
@@ -139,6 +140,7 @@ void ABouncingBall::Tick(float DeltaTime)
 
 			CollideWithOtherBall(*OtherBall, NewLocation);
 		}
+#endif
 	}
 	SetActorLocation(NewLocation);
 }
@@ -163,11 +165,11 @@ void ABouncingBall::CollideWithOtherBall(ABouncingBall& OtherBall, FVector& NewL
 	if (GameMode->GetDebugDraw())
 	{
 		// debugging weird collisions after switching modes
-		const auto useLocationHash = GameMode->GetUseLocationHash();
-		if (useLocationHash)
-		{
-			check(useLocationHash && Distance * 0.5 <= HashPrecision);
-		}
+		//const auto useLocationHash = GameMode->GetUseLocationHash();
+		//if (useLocationHash)
+		//{
+		//	check(useLocationHash && Distance * 0.5 <= HashPrecision);
+		//}
 
 		bool shouldDraw = (GameMode->GetDebugLinesDrawn() < 500);
 		if (!shouldDraw)
