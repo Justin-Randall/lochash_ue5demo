@@ -3,12 +3,20 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
-#include "lochash.hpp"
-#include "location_hash.hpp"
-#include "location_hash_query_distance_squared.hpp"
-#include "location_hash_quantized_coordinate.hpp"
+#include "lochash/lochash.hpp"
+#include "lochash/location_hash.hpp"
+#include "lochash/location_hash_query_distance_squared.hpp"
+#include "lochash/location_hash_quantized_coordinate.hpp"
+
+// ---------------------------------------------------------
+// Some helpers/wrappers to make the interface look and feel
+// more like Unreal Engine.
+// ---------------------------------------------------------
+
 
 // Must be a power of 2 for the location hash to work correctly. There is a compile-time check for this.
+// Set to 1024 for this demo. 2048 may also be a good choice.
+// For perf testing, take it down to 128.
 constexpr size_t HashPrecision = 1024;
 
 struct UQuantizedCoordinate : public lochash::QuantizedCoordinate<HashPrecision, double, 3>

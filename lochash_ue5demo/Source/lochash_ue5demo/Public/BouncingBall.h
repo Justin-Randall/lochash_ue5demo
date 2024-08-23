@@ -41,7 +41,9 @@ private:
 	// Note: Due to UnrealEngine construction rules, this has to be a pointer, not a reference :(
 	FLocationHash* LocationHash;
 	ALocHashDemoGameMode* GameMode;
+
 	// LocationHash keys for this ball
 	// This is an optimization to reduce the number of queries to the LocationHash
+	// TODO : this may be a premature optimization, and it may increase call counts to the LocationHash
 	TArray<UQuantizedCoordinate> LocationHashKeys;
 };
